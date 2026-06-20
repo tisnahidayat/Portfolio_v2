@@ -99,7 +99,7 @@ const SocialLinks = () => {
 
 
   return (
-    <div className="w-full bg-gradient-to-br from-white/10 to-white/5 rounded-2xl p-6 py-8 backdrop-blur-xl">
+    <div className="w-full bg-[#0d0d1f]/90 bg-gradient-to-br from-white/5 to-white/[0.02] rounded-2xl p-6 py-8 backdrop-blur-xl border border-white/10">
       <h3
         className="text-xl font-semibold text-white mb-6 flex items-center gap-2"
         data-aos="fade-down" 

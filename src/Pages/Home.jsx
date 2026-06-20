@@ -188,14 +188,14 @@ const Home = () => {
       </Helmet>
 
       <div
-        className="min-h-screen bg-[#030014] overflow-hidden px-[5%] sm:px-[5%] lg:px-[10%]"
+        className="min-h-screen bg-[#030014] overflow-hidden px-[5%] sm:px-[5%] lg:px-[10%] pt-16"
         id="Home"
       >
         <div
           className={`relative z-10 transition-all duration-1000 ${isLoaded ? "opacity-100" : "opacity-0"}`}
         >
-          <div className="container mx-auto min-h-screen relative">
-            <div className="flex flex-col lg:flex-row items-center justify-center h-screen md:justify-between gap-0 sm:gap-12 lg:gap-20">
+          <div className="container mx-auto min-h-[calc(100vh-4rem)] relative">
+            <div className="flex flex-col lg:flex-row items-center justify-center min-h-[calc(100vh-4rem)] md:justify-between gap-0 sm:gap-12 lg:gap-20">
               {/* Left Column */}
               <div
                 className="w-full lg:w-1/2 space-y-6 sm:space-y-8 text-left lg:text-left order-1 lg:order-1 lg:mt-0"
