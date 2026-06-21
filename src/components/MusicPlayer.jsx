@@ -15,7 +15,6 @@ export default function MusicPlayer({ src = "/music.mp3" }) {
     return () => window.removeEventListener("scroll", update);
   }, []);
 
-  // Auto-play: try immediately, fallback to first user interaction
   useEffect(() => {
     const audio = new Audio(src);
     audio.loop = true;
@@ -23,28 +22,7 @@ export default function MusicPlayer({ src = "/music.mp3" }) {
     audio.preload = "none";
     audioRef.current = audio;
 
-    let interactListener = null;
-
-    const removeInteract = () => {
-      if (interactListener) {
-        ["click", "keydown", "scroll", "touchstart"].forEach((ev) =>
-          document.removeEventListener(ev, interactListener)
-        );
-        interactListener = null;
-      }
-    };
-
-    // Wait for first interaction to start (preload=none, so no autoplay attempt)
-    interactListener = () => {
-      audio.play().then(() => setPlaying(true)).catch(() => {});
-      removeInteract();
-    };
-    ["click", "keydown", "scroll", "touchstart"].forEach((ev) =>
-      document.addEventListener(ev, interactListener, { passive: true })
-    );
-
     return () => {
-      removeInteract();
       audio.pause();
       audio.src = "";
     };
