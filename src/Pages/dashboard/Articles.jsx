@@ -275,9 +275,13 @@ export default function Articles() {
             </div>
             <button
               onClick={() => setMode("create")}
-              className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 rounded-xl text-sm font-medium text-white hover:opacity-90 transition-opacity"
+              className="relative group shrink-0"
             >
-              <Plus className="w-4 h-4" /> New Article
+              <div className="absolute -inset-0.5 bg-gradient-to-r from-[#4f52c9] to-[#8644c5] rounded-xl opacity-50 blur group-hover:opacity-80 transition duration-300" />
+              <div className="relative flex items-center gap-2 px-4 py-2.5 bg-[#030014] rounded-xl border border-white/10">
+                <Plus className="w-4 h-4 text-indigo-400" />
+                <span className="text-sm text-gray-200">New Article</span>
+              </div>
             </button>
           </div>
 
@@ -288,9 +292,15 @@ export default function Articles() {
               ))}
             </div>
           ) : articles.length === 0 ? (
-            <div className="text-center py-20 text-gray-500">
-              <BookOpen className="w-10 h-10 mx-auto mb-2 opacity-30" />
-              <p>No articles yet</p>
+            <div className="flex flex-col items-center justify-center py-20 text-gray-500">
+              <div className="relative mb-4">
+                <div className="absolute -inset-3 bg-gradient-to-r from-[#6366f1] to-[#a855f7] rounded-full blur opacity-20" />
+                <div className="relative w-16 h-16 rounded-full bg-white/5 border border-white/10 flex items-center justify-center">
+                  <BookOpen className="w-7 h-7 text-indigo-400/50" />
+                </div>
+              </div>
+              <p className="text-base font-medium text-gray-400 mb-1">No articles yet</p>
+              <p className="text-sm text-gray-600">Click "New Article" to create your first article</p>
             </div>
           ) : (
             <div className="space-y-3">

@@ -13,7 +13,20 @@ import Box from "@mui/material/Box";
 import CardProject from "../components/CardProject";
 import TechStackIcon from "../components/TechStackIcon";
 import Certificate from "../components/Certificate";
-import { ClipboardCheck, Award, Boxes } from "lucide-react";
+import { ClipboardCheck, Award, Boxes, FolderOpen, BookMarked } from "lucide-react";
+
+const EmptyState = ({ icon: Icon, title, subtitle }) => (
+  <div className="flex flex-col items-center justify-center py-20 w-full col-span-full">
+    <div className="relative mb-4">
+      <div className="absolute -inset-3 bg-gradient-to-r from-[#6366f1] to-[#a855f7] rounded-full blur opacity-20" />
+      <div className="relative w-16 h-16 rounded-full bg-white/5 border border-white/10 flex items-center justify-center">
+        <Icon className="w-7 h-7 text-indigo-400/50" />
+      </div>
+    </div>
+    <p className="text-base font-medium text-gray-400 mb-1">{title}</p>
+    <p className="text-sm text-gray-600 text-center max-w-xs">{subtitle}</p>
+  </div>
+);
 
 
 const SkeletonCard = () => (
@@ -336,6 +349,8 @@ export default function FullWidthTabs() {
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 2xl:grid-cols-3 gap-5 w-full">
                 {loading
                   ? Array.from({ length: initialItems }).map((_, i) => <SkeletonCard key={i} />)
+                  : projects.length === 0
+                  ? <EmptyState icon={FolderOpen} title="No projects yet" subtitle="Projects will appear here once they're added. Check back soon!" />
                   : displayedProjects.map((project, index) => (
                   <div
                     key={project.id || index}
@@ -372,6 +387,8 @@ export default function FullWidthTabs() {
               <div className="grid grid-cols-1 md:grid-cols-3 md:gap-5 gap-4 w-full">
                 {loading
                   ? Array.from({ length: initialItems }).map((_, i) => <SkeletonCert key={i} />)
+                  : certificates.length === 0
+                  ? <EmptyState icon={BookMarked} title="No certificates yet" subtitle="Certificates will be displayed here once they're added." />
                   : displayedCertificates.map((certificate, index) => (
                   <div
                     key={certificate.id || index}
