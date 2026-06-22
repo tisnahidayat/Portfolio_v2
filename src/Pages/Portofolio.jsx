@@ -168,7 +168,6 @@ export default function FullWidthTabs() {
   const [projects, setProjects] = useState([]);
   const [certificates, setCertificates] = useState([]);
   const [showAllProjects, setShowAllProjects] = useState(false);
-  const [showAllCertificates, setShowAllCertificates] = useState(false);
   const [loading, setLoading] = useState(true);
   const [initialItems, setInitialItems] = useState(window.innerWidth < 768 ? 4 : 6);
   useEffect(() => {
@@ -232,7 +231,6 @@ export default function FullWidthTabs() {
   }, []);
 
   const displayedProjects = showAllProjects ? projects : projects.slice(0, initialItems);
-  const displayedCertificates = showAllCertificates ? certificates : certificates.slice(0, initialItems);
 
   return (
     <div className="md:px-[10%] px-[5%] py-10 md:py-[5%] w-full bg-[#030014] overflow-hidden" id="Portfolio">
@@ -383,31 +381,25 @@ export default function FullWidthTabs() {
           </TabPanel>
 
           <TabPanel value={value} index={1} dir={theme.direction}>
-            <div className="container mx-auto flex justify-center items-center overflow-hidden">
-              <div className="grid grid-cols-1 md:grid-cols-3 md:gap-5 gap-4 w-full">
-                {loading
-                  ? Array.from({ length: initialItems }).map((_, i) => <SkeletonCert key={i} />)
-                  : certificates.length === 0
-                  ? <EmptyState icon={BookMarked} title="No certificates yet" subtitle="Certificates will be displayed here once they're added." />
-                  : displayedCertificates.map((certificate, index) => (
-                  <div
-                    key={certificate.id || index}
-                    data-aos={index % 3 === 0 ? "fade-up-right" : index % 3 === 1 ? "fade-up" : "fade-up-left"}
-                    data-aos-duration={index % 3 === 0 ? "1000" : index % 3 === 1 ? "1200" : "1000"}
-                  >
-                    <Certificate ImgSertif={certificate.img} />
-                  </div>
-                ))}
+            <div className="relative">
+              <div className="overflow-y-auto max-h-[500px] cert-scroll">
+                <div className="grid grid-cols-1 md:grid-cols-3 md:gap-5 gap-4 w-full pb-4">
+                  {loading
+                    ? Array.from({ length: 6 }).map((_, i) => <SkeletonCert key={i} />)
+                    : certificates.length === 0
+                    ? <EmptyState icon={BookMarked} title="No certificates yet" subtitle="Certificates will be displayed here once they're added." />
+                    : certificates.map((certificate, index) => (
+                      <div key={certificate.id || index}>
+                        <Certificate ImgSertif={certificate.img} index={index} />
+                      </div>
+                    ))}
+                </div>
               </div>
+              <div
+                className="absolute bottom-0 left-0 right-0 h-16 pointer-events-none"
+                style={{ background: "linear-gradient(to top, #030014, transparent)" }}
+              />
             </div>
-            {!loading && certificates.length > initialItems && (
-              <div className="mt-6 w-full flex justify-start">
-                <ToggleButton
-                  onClick={() => toggleShowMore('certificates')}
-                  isShowingMore={showAllCertificates}
-                />
-              </div>
-            )}
           </TabPanel>
 
           <TabPanel value={value} index={2} dir={theme.direction}>

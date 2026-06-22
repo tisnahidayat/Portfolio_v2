@@ -8,7 +8,8 @@ import Experience from './dashboard/Experience'
 import Education from './dashboard/Education'
 import Organizations from './dashboard/Organizations'
 import Articles from './dashboard/Articles'
-import { FolderGit2, Award, MessageSquare, LogOut, LayoutDashboard, Menu, Briefcase, GraduationCap, Users, BookOpen } from 'lucide-react'
+import SettingsPage from './dashboard/Settings'
+import { FolderGit2, Award, MessageSquare, LogOut, LayoutDashboard, Menu, Briefcase, GraduationCap, Users, BookOpen, SlidersHorizontal } from 'lucide-react'
 
 const NAV_ITEMS = [
   { to: 'projects', label: 'Projects', icon: FolderGit2 },
@@ -18,6 +19,7 @@ const NAV_ITEMS = [
   { to: 'organizations', label: 'Organizations', icon: Users },
   { to: 'articles', label: 'Articles', icon: BookOpen },
   { to: 'comments', label: 'Comments', icon: MessageSquare },
+  { to: 'settings', label: 'Settings', icon: SlidersHorizontal },
 ]
 
 export default function Dashboard() {
@@ -139,6 +141,7 @@ export default function Dashboard() {
             <Route path="organizations" element={<Organizations />} />
             <Route path="articles" element={<Articles />} />
             <Route path="comments" element={<Comments />} />
+            <Route path="settings" element={<SettingsPage />} />
           </Routes>
         </main>
       </div>

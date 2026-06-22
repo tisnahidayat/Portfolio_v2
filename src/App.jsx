@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import React, { useState, useEffect, lazy, Suspense } from "react";
 import { HelmetProvider } from "react-helmet-async";
 import AOS from "aos";
@@ -16,10 +16,12 @@ import MusicPlayer from "./components/MusicPlayer";
 import { AnimatePresence } from "framer-motion";
 import Swal from "sweetalert2";
 import Footer from "./components/Footer";
+import { supabase } from "./supabase";
 
 import Login from "./Pages/Login";
 import Dashboard from "./Pages/Dashboard";
 import ProtectedRoute from "./components/ProtectedRoute";
+import Maintenance from "./Pages/Maintenance";
 
 const Portofolio = lazy(() => import("./Pages/Portofolio"));
 const Resume = lazy(() => import("./Pages/Resume"));
@@ -45,7 +47,6 @@ const LandingPage = ({ showWelcome, setShowWelcome }) => {
       {!showWelcome && (
         <>
           <Navbar />
-      
           <Home />
           <About />
           <Suspense fallback={<div className="h-20" />}>
@@ -90,11 +91,84 @@ function triggerEasterEgg() {
   });
 }
 
+function AppRoutes({ maintenanceMode, showWelcome, setShowWelcome }) {
+  const location = useLocation();
+  const isAdminPath =
+    location.pathname.startsWith("/dashboard") ||
+    location.pathname === "/login";
+
+  if (maintenanceMode && !isAdminPath) {
+    return <Maintenance />;
+  }
+
+  return (
+    <Routes>
+      {/* PUBLIC */}
+      <Route
+        path="/"
+        element={
+          <LandingPage
+            showWelcome={showWelcome}
+            setShowWelcome={setShowWelcome}
+          />
+        }
+      />
+
+      <Route path="/project/:slug" element={<ProjectPageLayout />} />
+
+      {/* BLOG ARTICLE DETAIL */}
+      <Route
+        path="/blog/:slug"
+        element={
+          <Suspense fallback={<div className="min-h-screen bg-[#030014]" />}>
+            <ArticleDetail />
+          </Suspense>
+        }
+      />
+
+      {/* AUTH */}
+      <Route path="/login" element={<Login />} />
+
+      {/* ADMIN (PROTECTED) */}
+      <Route
+        path="/dashboard/*"
+        element={
+          <ProtectedRoute>
+            <Dashboard />
+          </ProtectedRoute>
+        }
+      />
+
+      {/* 404 */}
+      <Route
+        path="*"
+        element={
+          <Suspense fallback={null}>
+            <NotFoundPage />
+          </Suspense>
+        }
+      />
+    </Routes>
+  );
+}
+
 function App() {
   const [showWelcome, setShowWelcome] = useState(true);
+  const [maintenanceMode, setMaintenanceMode] = useState(false);
 
   useEffect(() => {
     AOS.init({ once: false, duration: 800, easing: "ease-out-quart" });
+
+    supabase
+      .from("settings")
+      .select("maintenance_mode")
+      .eq("id", 1)
+      .single()
+      .then(({ data }) => {
+        if (data) setMaintenanceMode(data.maintenance_mode);
+      })
+      .catch(() => {});
+
     const handler = () => triggerEasterEgg();
     window.addEventListener("easter-egg", handler);
     return () => window.removeEventListener("easter-egg", handler);
@@ -104,60 +178,18 @@ function App() {
     <HelmetProvider>
       <CustomCursor />
       <ScrollProgress />
-      <BackToTop />
-      <HireMeCTA />
-      <MusicPlayer />
+      {!maintenanceMode && <BackToTop />}
+      {!maintenanceMode && <HireMeCTA />}
+      {!maintenanceMode && <MusicPlayer />}
       <div className="pointer-events-none">
         <AnimatedBackground />
       </div>
       <BrowserRouter>
-        <Routes>
-          {/* PUBLIC */}
-          <Route
-            path="/"
-            element={
-              <LandingPage
-                showWelcome={showWelcome}
-                setShowWelcome={setShowWelcome}
-              />
-            }
-          />
-
-          <Route path="/project/:slug" element={<ProjectPageLayout />} />
-
-          {/* BLOG ARTICLE DETAIL */}
-          <Route
-            path="/blog/:slug"
-            element={
-              <Suspense fallback={<div className="min-h-screen bg-[#030014]" />}>
-                <ArticleDetail />
-              </Suspense>
-            }
-          />
-
-          {/* AUTH */}
-          <Route path="/login" element={<Login />} />
-
-          {/* ADMIN (PROTECTED) */}
-          <Route
-            path="/dashboard/*"
-            element={
-              <ProtectedRoute>
-                <Dashboard />
-              </ProtectedRoute>
-            }
-          />
-
-          {/* 404 */}
-          <Route
-            path="*"
-            element={
-              <Suspense fallback={null}>
-                <NotFoundPage />
-              </Suspense>
-            }
-          />
-        </Routes>
+        <AppRoutes
+          maintenanceMode={maintenanceMode}
+          showWelcome={showWelcome}
+          setShowWelcome={setShowWelcome}
+        />
       </BrowserRouter>
     </HelmetProvider>
   );

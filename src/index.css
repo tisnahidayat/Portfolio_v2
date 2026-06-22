@@ -123,6 +123,24 @@ body {
 	will-change: transform, opacity !important;
   }
 
+.cert-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(99, 102, 241, 0.35) transparent;
+}
+.cert-scroll::-webkit-scrollbar {
+  width: 4px;
+}
+.cert-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+.cert-scroll::-webkit-scrollbar-thumb {
+  background: rgba(99, 102, 241, 0.35);
+  border-radius: 99px;
+}
+.cert-scroll::-webkit-scrollbar-thumb:hover {
+  background: rgba(99, 102, 241, 0.6);
+}
+
 /* ── TipTap editor content ─────────────────────────── */
 .tiptap-content .ProseMirror {
   outline: none;
