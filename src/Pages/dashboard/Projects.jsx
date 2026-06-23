@@ -212,6 +212,7 @@ const ProjectForm = ({
     github: initial?.github || "",
     sheet_url: initial?.sheet_url || "",
     youtube_url: initial?.youtube_url || "",
+    sort_order: initial?.sort_order ?? "",
   });
   const [file, setFile] = useState(null);
   const [preview, setPreview] = useState(initial?.img || null);
@@ -296,6 +297,25 @@ const ProjectForm = ({
 
         <div className="sm:col-span-2 space-y-1.5">
           <label className="text-xs text-indigo-300/70 uppercase tracking-wider font-medium">
+            Sort Order
+          </label>
+          <div className="flex items-center gap-3">
+            <input
+              type="number"
+              value={form.sort_order}
+              onChange={set("sort_order")}
+              placeholder="0"
+              min="0"
+              className="w-32 bg-[#0d0d22] border border-white/10 rounded-xl px-4 py-2.5 text-gray-200 placeholder-gray-600 text-sm outline-none focus:border-indigo-500/60 focus:ring-1 focus:ring-indigo-500/20 transition-all"
+            />
+            <p className="text-xs text-gray-500">
+              Angka lebih kecil = tampil lebih awal. Kosongkan untuk urutan default.
+            </p>
+          </div>
+        </div>
+
+        <div className="sm:col-span-2 space-y-1.5">
+          <label className="text-xs text-indigo-300/70 uppercase tracking-wider font-medium">
             Project Image
           </label>
           <label className="flex items-center gap-4 w-full bg-[#0d0d22] border border-dashed border-white/15 rounded-xl px-4 py-4 cursor-pointer hover:border-indigo-500/40 hover:bg-white/4 transition-all">
@@ -366,6 +386,7 @@ export default function Projects() {
     const { data } = await supabase
       .from("projects")
       .select("*")
+      .order("sort_order", { ascending: true, nullsFirst: false })
       .order("created_at", { ascending: false });
     setProjects(data || []);
     setLoading(false);
@@ -398,6 +419,7 @@ export default function Projects() {
       github: form.github,
       sheet_url: form.sheet_url || null,
       youtube_url: form.youtube_url || null,
+      sort_order: form.sort_order !== "" ? parseInt(form.sort_order) : null,
     });
     setShowCreate(false);
     setUploading(false);
@@ -420,6 +442,7 @@ export default function Projects() {
       github: form.github,
       sheet_url: form.sheet_url || null,
       youtube_url: form.youtube_url || null,
+      sort_order: form.sort_order !== "" ? parseInt(form.sort_order) : null,
     }).eq("id", editProject.id);
     setEditProject(null);
     setUploading(false);

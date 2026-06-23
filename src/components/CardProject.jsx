@@ -112,13 +112,13 @@ const CardProject = ({
           </div>
 
           {/* Action bar */}
-          <div className="flex items-center justify-between pt-1 border-t border-white/5">
+          <div className="flex flex-wrap items-center justify-between gap-y-2 pt-1 border-t border-white/5">
 
             {/* Like button */}
             <button
               onClick={toggle}
               aria-label={liked ? "Unlike" : "Like"}
-              className={`group/like flex items-center gap-2 px-3.5 py-2 rounded-full text-sm font-medium transition-all duration-300 active:scale-90 select-none
+              className={`group/like flex items-center gap-2 px-3.5 py-2 rounded-full text-sm font-medium transition-all duration-300 active:scale-90 select-none shrink-0
                 ${liked
                   ? "bg-pink-500/15 border border-pink-400/40 text-pink-300 shadow-[0_0_16px_rgba(236,72,153,0.2)]"
                   : "bg-white/5 border border-white/10 text-gray-400 hover:text-pink-300 hover:border-pink-400/25 hover:bg-pink-500/10"
@@ -132,7 +132,7 @@ const CardProject = ({
             </button>
 
             {/* Icon links + Details */}
-            <div className="flex items-center gap-1">
+            <div className="flex flex-wrap items-center gap-1 shrink-0">
               {/* GitHub */}
               {GithubLink && (
                 <a
