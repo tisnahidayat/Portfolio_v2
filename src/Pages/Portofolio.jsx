@@ -181,7 +181,7 @@ export default function FullWidthTabs() {
   const fetchData = useCallback(async () => {
     try {
       const [projectsResponse, certificatesResponse] = await Promise.all([
-        supabase.from("projects").select("*").order('id', { ascending: false }),
+        supabase.from("projects").select("*").order('sort_order', { ascending: true, nullsFirst: false }).order('id', { ascending: false }),
         supabase.from("certificates").select("*").order('id', { ascending: false }),
       ]);
 
