@@ -50,58 +50,6 @@ const SkeletonCert = () => (
   </div>
 );
 
-const ToggleButton = ({ onClick, isShowingMore }) => (
-  <button
-    onClick={onClick}
-    className="
-      px-3 py-1.5
-      text-slate-300 
-      hover:text-white 
-      text-sm 
-      font-medium 
-      transition-all 
-      duration-300 
-      ease-in-out
-      flex 
-      items-center 
-      gap-2
-      bg-white/5 
-      hover:bg-white/10
-      rounded-md
-      border 
-      border-white/10
-      hover:border-white/20
-      backdrop-blur-sm
-      group
-      relative
-      overflow-hidden
-    "
-  >
-    <span className="relative z-10 flex items-center gap-2">
-      {isShowingMore ? "See Less" : "See More"}
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        width="16"
-        height="16"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        className={`
-          transition-transform 
-          duration-300 
-          ${isShowingMore ? "group-hover:-translate-y-0.5" : "group-hover:translate-y-0.5"}
-        `}
-      >
-        <polyline points={isShowingMore ? "18 15 12 9 6 15" : "6 9 12 15 18 9"}></polyline>
-      </svg>
-    </span>
-    <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-purple-500/50 transition-all duration-300 group-hover:w-full"></span>
-  </button>
-);
-
 
 function TabPanel({ children, value, index, ...other }) {
   return (
@@ -167,28 +115,26 @@ export default function FullWidthTabs() {
   const [value, setValue] = useState(0);
   const [projects, setProjects] = useState([]);
   const [certificates, setCertificates] = useState([]);
-  const [showAllProjects, setShowAllProjects] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [initialItems, setInitialItems] = useState(window.innerWidth < 768 ? 4 : 6);
-  useEffect(() => {
-    const update = () => setInitialItems(window.innerWidth < 768 ? 4 : 6);
-    window.addEventListener("resize", update, { passive: true });
-    return () => window.removeEventListener("resize", update);
-  }, []);
 
 
 
   const fetchData = useCallback(async () => {
     try {
       const [projectsResponse, certificatesResponse] = await Promise.all([
-        supabase.from("projects").select("*").order('sort_order', { ascending: true, nullsFirst: false }).order('id', { ascending: false }),
+        supabase.from("projects").select("*").order('id', { ascending: false }),
         supabase.from("certificates").select("*").order('id', { ascending: false }),
       ]);
 
       if (projectsResponse.error) throw projectsResponse.error;
       if (certificatesResponse.error) throw certificatesResponse.error;
 
-      const projectData = projectsResponse.data || [];
+      const projectData = (projectsResponse.data || []).sort((a, b) => {
+        const aOrder = a.sort_order ?? Infinity;
+        const bOrder = b.sort_order ?? Infinity;
+        if (aOrder !== bOrder) return aOrder - bOrder;
+        return b.id - a.id;
+      });
       const certificateData = certificatesResponse.data || [];
 
       setProjects(projectData);
@@ -213,6 +159,7 @@ export default function FullWidthTabs() {
     if (cachedProjects && cachedCertificates) {
       setProjects(JSON.parse(cachedProjects));
       setCertificates(JSON.parse(cachedCertificates));
+      setLoading(false);
     }
 
     fetchData();
@@ -221,16 +168,6 @@ export default function FullWidthTabs() {
   const handleChange = (event, newValue) => {
     setValue(newValue);
   };
-
-  const toggleShowMore = useCallback((type) => {
-    if (type === 'projects') {
-      setShowAllProjects(prev => !prev);
-    } else {
-      setShowAllCertificates(prev => !prev);
-    }
-  }, []);
-
-  const displayedProjects = showAllProjects ? projects : projects.slice(0, initialItems);
 
   return (
     <div className="md:px-[10%] px-[5%] py-10 md:py-[5%] w-full bg-[#030014] overflow-hidden" id="Portfolio">
@@ -343,18 +280,14 @@ export default function FullWidthTabs() {
           onChangeIndex={setValue}
         >
           <TabPanel value={value} index={0} dir={theme.direction}>
-            <div className="container mx-auto flex justify-center items-center overflow-hidden">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 2xl:grid-cols-3 gap-5 w-full">
+            <div className="overflow-y-auto max-h-[500px] cert-scroll">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 2xl:grid-cols-3 gap-5 w-full pb-4">
                 {loading
-                  ? Array.from({ length: initialItems }).map((_, i) => <SkeletonCard key={i} />)
+                  ? Array.from({ length: 6 }).map((_, i) => <SkeletonCard key={i} />)
                   : projects.length === 0
                   ? <EmptyState icon={FolderOpen} title="No projects yet" subtitle="Projects will appear here once they're added. Check back soon!" />
-                  : displayedProjects.map((project, index) => (
-                  <div
-                    key={project.id || index}
-                    data-aos={index % 3 === 0 ? "fade-up-right" : index % 3 === 1 ? "fade-up" : "fade-up-left"}
-                    data-aos-duration={index % 3 === 0 ? "1000" : index % 3 === 1 ? "1200" : "1000"}
-                  >
+                  : projects.map((project, index) => (
+                  <div key={project.id || index}>
                     <CardProject
                       Img={project.img}
                       Title={project.title}
@@ -370,35 +303,21 @@ export default function FullWidthTabs() {
                 ))}
               </div>
             </div>
-            {!loading && projects.length > initialItems && (
-              <div className="mt-6 w-full flex justify-start">
-                <ToggleButton
-                  onClick={() => toggleShowMore('projects')}
-                  isShowingMore={showAllProjects}
-                />
-              </div>
-            )}
           </TabPanel>
 
           <TabPanel value={value} index={1} dir={theme.direction}>
-            <div className="relative">
-              <div className="overflow-y-auto max-h-[500px] cert-scroll">
-                <div className="grid grid-cols-1 md:grid-cols-3 md:gap-5 gap-4 w-full pb-4">
-                  {loading
-                    ? Array.from({ length: 6 }).map((_, i) => <SkeletonCert key={i} />)
-                    : certificates.length === 0
-                    ? <EmptyState icon={BookMarked} title="No certificates yet" subtitle="Certificates will be displayed here once they're added." />
-                    : certificates.map((certificate, index) => (
-                      <div key={certificate.id || index}>
-                        <Certificate ImgSertif={certificate.img} index={index} />
-                      </div>
-                    ))}
-                </div>
+            <div className="overflow-y-auto max-h-[500px] cert-scroll">
+              <div className="grid grid-cols-1 md:grid-cols-3 md:gap-5 gap-4 w-full pb-4">
+                {loading
+                  ? Array.from({ length: 6 }).map((_, i) => <SkeletonCert key={i} />)
+                  : certificates.length === 0
+                  ? <EmptyState icon={BookMarked} title="No certificates yet" subtitle="Certificates will be displayed here once they're added." />
+                  : certificates.map((certificate, index) => (
+                    <div key={certificate.id || index}>
+                      <Certificate ImgSertif={certificate.img} index={index} />
+                    </div>
+                  ))}
               </div>
-              <div
-                className="absolute bottom-0 left-0 right-0 h-16 pointer-events-none"
-                style={{ background: "linear-gradient(to top, #030014, transparent)" }}
-              />
             </div>
           </TabPanel>
 
