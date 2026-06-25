@@ -212,7 +212,7 @@ const ProjectForm = ({
     github: initial?.github || "",
     sheet_url: initial?.sheet_url || "",
     youtube_url: initial?.youtube_url || "",
-    sort_order: initial?.sort_order ?? "",
+    sort_order: initial?.sort_order ?? 0,
   });
   const [file, setFile] = useState(null);
   const [preview, setPreview] = useState(initial?.img || null);
@@ -294,25 +294,13 @@ const ProjectForm = ({
           onChange={set("youtube_url")}
           placeholder="https://youtube.com/watch?v=..."
         />
-
-        <div className="sm:col-span-2 space-y-1.5">
-          <label className="text-xs text-indigo-300/70 uppercase tracking-wider font-medium">
-            Sort Order
-          </label>
-          <div className="flex items-center gap-3">
-            <input
-              type="number"
-              value={form.sort_order}
-              onChange={set("sort_order")}
-              placeholder="0"
-              min="0"
-              className="w-32 bg-[#0d0d22] border border-white/10 rounded-xl px-4 py-2.5 text-gray-200 placeholder-gray-600 text-sm outline-none focus:border-indigo-500/60 focus:ring-1 focus:ring-indigo-500/20 transition-all"
-            />
-            <p className="text-xs text-gray-500">
-              Angka lebih kecil = tampil lebih awal. Kosongkan untuk urutan default.
-            </p>
-          </div>
-        </div>
+        <InputField
+          label="Sort Order"
+          value={form.sort_order}
+          onChange={set("sort_order")}
+          type="number"
+          placeholder="0"
+        />
 
         <div className="sm:col-span-2 space-y-1.5">
           <label className="text-xs text-indigo-300/70 uppercase tracking-wider font-medium">
@@ -383,11 +371,16 @@ export default function Projects() {
 
   const fetchProjects = async () => {
     setLoading(true);
-    const { data } = await supabase
+    const { data: raw } = await supabase
       .from("projects")
       .select("*")
-      .order("sort_order", { ascending: true, nullsFirst: false })
       .order("created_at", { ascending: false });
+    const data = (raw || []).sort((a, b) => {
+      const aOrder = a.sort_order ?? Infinity;
+      const bOrder = b.sort_order ?? Infinity;
+      if (aOrder !== bOrder) return aOrder - bOrder;
+      return 0;
+    });
     setProjects(data || []);
     setLoading(false);
   };
@@ -419,7 +412,7 @@ export default function Projects() {
       github: form.github,
       sheet_url: form.sheet_url || null,
       youtube_url: form.youtube_url || null,
-      sort_order: form.sort_order !== "" ? parseInt(form.sort_order) : null,
+      sort_order: Number(form.sort_order) || 0,
     });
     setShowCreate(false);
     setUploading(false);
@@ -442,7 +435,7 @@ export default function Projects() {
       github: form.github,
       sheet_url: form.sheet_url || null,
       youtube_url: form.youtube_url || null,
-      sort_order: form.sort_order !== "" ? parseInt(form.sort_order) : null,
+      sort_order: Number(form.sort_order) || 0,
     }).eq("id", editProject.id);
     setEditProject(null);
     setUploading(false);
