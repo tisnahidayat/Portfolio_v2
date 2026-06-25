@@ -400,6 +400,16 @@ export default function Projects() {
 
   const handleCreate = async (form, file) => {
     setUploading(true);
+    const newOrder = Number(form.sort_order) || 0;
+
+    // Shift projects at >= newOrder upward, highest sort first to avoid conflicts
+    const toShift = [...projects]
+      .filter((p) => p.sort_order >= newOrder)
+      .sort((a, b) => b.sort_order - a.sort_order);
+    for (const p of toShift) {
+      await supabase.from("projects").update({ sort_order: p.sort_order + 1 }).eq("id", p.id);
+    }
+
     let imgUrl = "";
     if (file) imgUrl = await uploadImage(file);
     const { error } = await supabase.from("projects").insert({
@@ -412,7 +422,7 @@ export default function Projects() {
       github: form.github,
       sheet_url: form.sheet_url || null,
       youtube_url: form.youtube_url || null,
-      sort_order: Number(form.sort_order) || 0,
+      sort_order: newOrder,
     });
     setShowCreate(false);
     setUploading(false);
@@ -423,6 +433,31 @@ export default function Projects() {
 
   const handleEdit = async (form, file) => {
     setUploading(true);
+    const oldOrder = editProject.sort_order ?? 0;
+    const newOrder = Number(form.sort_order) || 0;
+
+    if (newOrder !== oldOrder) {
+      if (newOrder < oldOrder) {
+        // Moving to earlier slot: shift projects in [newOrder, oldOrder-1] down by +1
+        // Update from highest to lowest to avoid unique constraint conflicts
+        const toShift = [...projects]
+          .filter((p) => p.id !== editProject.id && p.sort_order >= newOrder && p.sort_order <= oldOrder - 1)
+          .sort((a, b) => b.sort_order - a.sort_order);
+        for (const p of toShift) {
+          await supabase.from("projects").update({ sort_order: p.sort_order + 1 }).eq("id", p.id);
+        }
+      } else {
+        // Moving to later slot: shift projects in [oldOrder+1, newOrder] up by -1
+        // Update from lowest to highest to avoid unique constraint conflicts
+        const toShift = [...projects]
+          .filter((p) => p.id !== editProject.id && p.sort_order >= oldOrder + 1 && p.sort_order <= newOrder)
+          .sort((a, b) => a.sort_order - b.sort_order);
+        for (const p of toShift) {
+          await supabase.from("projects").update({ sort_order: p.sort_order - 1 }).eq("id", p.id);
+        }
+      }
+    }
+
     let imgUrl = editProject.img || "";
     if (file) imgUrl = await uploadImage(file);
     const { error } = await supabase.from("projects").update({
@@ -435,7 +470,7 @@ export default function Projects() {
       github: form.github,
       sheet_url: form.sheet_url || null,
       youtube_url: form.youtube_url || null,
-      sort_order: Number(form.sort_order) || 0,
+      sort_order: newOrder,
     }).eq("id", editProject.id);
     setEditProject(null);
     setUploading(false);
