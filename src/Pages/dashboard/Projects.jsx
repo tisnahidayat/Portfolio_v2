@@ -390,11 +390,11 @@ export default function Projects() {
   }, []);
 
   const uploadImage = async (f) => {
-    const fileName = `${Date.now()}-${f.name}`;
-    await supabase.storage.from("project-images").upload(fileName, f);
-    const { data } = supabase.storage
-      .from("project-images")
-      .getPublicUrl(fileName);
+    const ext = f.name.split(".").pop();
+    const fileName = `${Date.now()}.${ext}`;
+    const { error: uploadError } = await supabase.storage.from("project-images").upload(fileName, f);
+    if (uploadError) throw new Error(uploadError.message);
+    const { data } = supabase.storage.from("project-images").getPublicUrl(fileName);
     return data.publicUrl;
   };
 
@@ -419,7 +419,13 @@ export default function Projects() {
     }
 
     let imgUrl = "";
-    if (file) imgUrl = await uploadImage(file);
+    try {
+      if (file) imgUrl = await uploadImage(file);
+    } catch (e) {
+      setUploading(false);
+      swal({ title: "Upload failed", text: e.message, icon: "error" });
+      return;
+    }
     const { error } = await supabase.from("projects").insert({
       title: form.title,
       description: form.description,
@@ -467,7 +473,13 @@ export default function Projects() {
     }
 
     let imgUrl = editProject.img || "";
-    if (file) imgUrl = await uploadImage(file);
+    try {
+      if (file) imgUrl = await uploadImage(file);
+    } catch (e) {
+      setUploading(false);
+      swal({ title: "Upload failed", text: e.message, icon: "error" });
+      return;
+    }
     const { error } = await supabase.from("projects").update({
       title: form.title,
       description: form.description,

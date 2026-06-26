@@ -58,8 +58,14 @@ function ArticleForm({ initial, onSave, onCancel, onBusy }) {
 
     let coverUrl = initial?.cover_url ?? null;
     if (file) {
-      const fileName = `${Date.now()}-${file.name}`;
-      await supabase.storage.from("article-covers").upload(fileName, file);
+      const ext = file.name.split(".").pop();
+      const fileName = `${Date.now()}.${ext}`;
+      const { error: uploadError } = await supabase.storage.from("article-covers").upload(fileName, file);
+      if (uploadError) {
+        onBusy(false);
+        swal({ title: "Upload failed", text: uploadError.message, icon: "error" });
+        return;
+      }
       const { data: urlData } = supabase.storage.from("article-covers").getPublicUrl(fileName);
       coverUrl = urlData.publicUrl;
     }
