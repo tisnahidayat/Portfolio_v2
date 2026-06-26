@@ -212,7 +212,7 @@ const ProjectForm = ({
     github: initial?.github || "",
     sheet_url: initial?.sheet_url || "",
     youtube_url: initial?.youtube_url || "",
-    sort_order: initial?.sort_order ?? 0,
+    sort_order: initial?.sort_order ?? "",
   });
   const [file, setFile] = useState(null);
   const [preview, setPreview] = useState(initial?.img || null);
@@ -400,14 +400,22 @@ export default function Projects() {
 
   const handleCreate = async (form, file) => {
     setUploading(true);
-    const newOrder = Number(form.sort_order) || 0;
+    const hasOrder = form.sort_order !== "" && form.sort_order !== null;
+    let finalOrder;
 
-    // Shift projects at >= newOrder upward, highest sort first to avoid conflicts
-    const toShift = [...projects]
-      .filter((p) => p.sort_order >= newOrder)
-      .sort((a, b) => b.sort_order - a.sort_order);
-    for (const p of toShift) {
-      await supabase.from("projects").update({ sort_order: p.sort_order + 1 }).eq("id", p.id);
+    if (hasOrder) {
+      finalOrder = Number(form.sort_order);
+      // Shift projects at >= finalOrder upward, highest first to avoid unique constraint conflicts
+      const toShift = [...projects]
+        .filter((p) => p.sort_order != null && p.sort_order >= finalOrder)
+        .sort((a, b) => b.sort_order - a.sort_order);
+      for (const p of toShift) {
+        await supabase.from("projects").update({ sort_order: p.sort_order + 1 }).eq("id", p.id);
+      }
+    } else {
+      // Auto-append to end
+      const maxOrder = projects.reduce((max, p) => (p.sort_order != null ? Math.max(max, p.sort_order) : max), -1);
+      finalOrder = maxOrder + 1;
     }
 
     let imgUrl = "";
@@ -422,7 +430,7 @@ export default function Projects() {
       github: form.github,
       sheet_url: form.sheet_url || null,
       youtube_url: form.youtube_url || null,
-      sort_order: newOrder,
+      sort_order: finalOrder,
     });
     setShowCreate(false);
     setUploading(false);
@@ -433,24 +441,24 @@ export default function Projects() {
 
   const handleEdit = async (form, file) => {
     setUploading(true);
-    const oldOrder = editProject.sort_order ?? 0;
-    const newOrder = Number(form.sort_order) || 0;
+    const oldOrder = editProject.sort_order ?? null;
+    const newOrder = form.sort_order !== "" && form.sort_order !== null ? Number(form.sort_order) : null;
 
-    if (newOrder !== oldOrder) {
+    if (newOrder !== null && oldOrder !== null && newOrder !== oldOrder) {
       if (newOrder < oldOrder) {
-        // Moving to earlier slot: shift projects in [newOrder, oldOrder-1] down by +1
-        // Update from highest to lowest to avoid unique constraint conflicts
+        // Moving earlier: shift projects in [newOrder, oldOrder-1] down by +1
+        // Highest first to avoid unique constraint conflicts
         const toShift = [...projects]
-          .filter((p) => p.id !== editProject.id && p.sort_order >= newOrder && p.sort_order <= oldOrder - 1)
+          .filter((p) => p.id !== editProject.id && p.sort_order != null && p.sort_order >= newOrder && p.sort_order <= oldOrder - 1)
           .sort((a, b) => b.sort_order - a.sort_order);
         for (const p of toShift) {
           await supabase.from("projects").update({ sort_order: p.sort_order + 1 }).eq("id", p.id);
         }
       } else {
-        // Moving to later slot: shift projects in [oldOrder+1, newOrder] up by -1
-        // Update from lowest to highest to avoid unique constraint conflicts
+        // Moving later: shift projects in [oldOrder+1, newOrder] up by -1
+        // Lowest first to avoid unique constraint conflicts
         const toShift = [...projects]
-          .filter((p) => p.id !== editProject.id && p.sort_order >= oldOrder + 1 && p.sort_order <= newOrder)
+          .filter((p) => p.id !== editProject.id && p.sort_order != null && p.sort_order >= oldOrder + 1 && p.sort_order <= newOrder)
           .sort((a, b) => a.sort_order - b.sort_order);
         for (const p of toShift) {
           await supabase.from("projects").update({ sort_order: p.sort_order - 1 }).eq("id", p.id);
