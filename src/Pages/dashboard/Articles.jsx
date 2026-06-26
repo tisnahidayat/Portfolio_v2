@@ -4,7 +4,7 @@ import TipTapEditor from "../../components/TipTapEditor";
 import Swal from "sweetalert2";
 import { toSlug } from "../../utils/slug";
 import {
-  Plus, Pencil, Trash2, Eye, EyeOff, X, BookOpen, Calendar, HandHeart, Loader2,
+  Plus, Pencil, Trash2, Eye, EyeOff, X, BookOpen, Calendar, HandHeart, Loader2, ImageIcon,
 } from "lucide-react";
 
 const swal = (opts) =>
@@ -31,10 +31,11 @@ function ArticleForm({ initial, onSave, onCancel, onBusy }) {
     title:     initial?.title     ?? "",
     slug:      initial?.slug      ?? "",
     excerpt:   initial?.excerpt   ?? "",
-    cover_url: initial?.cover_url ?? "",
     content:   initial?.content   ?? "",
     published: initial?.published ?? false,
   });
+  const [file, setFile] = useState(null);
+  const [preview, setPreview] = useState(initial?.cover_url || null);
 
   const set = (key, val) => setForm((f) => ({ ...f, [key]: val }));
 
@@ -43,15 +44,31 @@ function ArticleForm({ initial, onSave, onCancel, onBusy }) {
     set("slug", toSlug(v));
   };
 
+  const handleFileChange = (e) => {
+    const f = e.target.files[0];
+    if (!f) return;
+    setFile(f);
+    setPreview(URL.createObjectURL(f));
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!form.title.trim()) return;
     onBusy(true, initial ? "Updating article…" : "Saving article…");
+
+    let coverUrl = initial?.cover_url ?? null;
+    if (file) {
+      const fileName = `${Date.now()}-${file.name}`;
+      await supabase.storage.from("article-covers").upload(fileName, file);
+      const { data: urlData } = supabase.storage.from("article-covers").getPublicUrl(fileName);
+      coverUrl = urlData.publicUrl;
+    }
+
     const payload = {
       title:      form.title.trim(),
       slug:       form.slug.trim() || toSlug(form.title),
       excerpt:    form.excerpt.trim() || null,
-      cover_url:  form.cover_url.trim() || null,
+      cover_url:  coverUrl,
       content:    form.content || "",
       published:  form.published,
       updated_at: new Date().toISOString(),
@@ -103,18 +120,22 @@ function ArticleForm({ initial, onSave, onCancel, onBusy }) {
         />
       </Field>
 
-      <Field label="Cover Image URL">
-        <input
-          className={inputCls}
-          value={form.cover_url}
-          onChange={(e) => set("cover_url", e.target.value)}
-          placeholder="https://…"
-        />
+      <Field label="Cover Image">
+        <label className="flex items-center gap-4 w-full bg-white/5 border border-dashed border-white/15 rounded-xl px-4 py-4 cursor-pointer hover:border-indigo-500/40 transition-all">
+          {preview ? (
+            <img src={preview} className="h-16 w-24 object-cover rounded-lg border border-white/10 shrink-0" alt="preview" />
+          ) : (
+            <div className="w-24 h-16 rounded-lg bg-white/5 flex items-center justify-center border border-white/10 shrink-0">
+              <ImageIcon className="w-5 h-5 text-gray-600" />
+            </div>
+          )}
+          <div>
+            <p className="text-sm text-gray-300">{preview ? "Change image" : "Click to upload image"}</p>
+            <p className="text-xs text-gray-600 mt-0.5">PNG, JPG, WEBP supported</p>
+          </div>
+          <input type="file" accept="image/*" onChange={handleFileChange} className="hidden" />
+        </label>
       </Field>
-
-      {form.cover_url && (
-        <img src={form.cover_url} alt="cover preview" className="h-32 w-full object-cover rounded-xl opacity-70" />
-      )}
 
       <Field label="Content *">
         <TipTapEditor content={form.content} onChange={(html) => set("content", html)} />
